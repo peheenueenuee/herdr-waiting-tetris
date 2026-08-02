@@ -1,0 +1,28 @@
+id = "nanka.tetris"
+name = "Agent Wait Tetris"
+version = "0.1.0"
+min_herdr_version = "0.7.0"
+description = "Play Tetris in a popup while an agent pane is working"
+platforms = ["linux", "macos"]
+
+# エージェントの状態が変わるたびに呼ばれる。
+# working になった瞬間だけポップアップを開く（閉じるのはゲーム側の仕事）。
+[[events]]
+on = "pane.agent_status_changed"
+command = ["node", "src/on-status.js"]
+
+# ゲーム本体。placement = "popup" は CLI からは指定できないのでここで宣言する。
+[[panes]]
+id = "tetris"
+title = "Tetris"
+placement = "popup"
+width = 40
+height = 24
+command = ["node", "src/tetris.js"]
+
+# 手動で開きたいとき用（キーバインドから呼べる）
+[[actions]]
+id = "open"
+title = "Open Tetris"
+contexts = ["workspace", "pane"]
+command = ["node", "src/open.js"]
