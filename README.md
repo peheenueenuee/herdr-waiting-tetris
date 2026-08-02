@@ -126,6 +126,16 @@ https://herdr.dev/plugins/ に自動でインデックスされる（審査は�
 省略すると `invalid_request` になる。また `placement = "popup"` は CLI の `--placement` では
 指定できないため、マニフェスト側で宣言している。
 
+`popup` / `overlay` のペインは**常にアクティブペインを対象に開く**。そのため
+`pane open` に `--workspace` や `--target-pane` を渡してはいけない。渡すと次のエラーで弾かれ、
+ペインは開かない。
+
+```
+{"error":{"code":"invalid_params","message":"overlay and popup plugin panes target the active pane"}}
+```
+
+監視対象のペインはこの引数ではなく `--env TETRIS_WATCH_PANE=<pane_id>` で伝えている。
+
 ## 操作
 
 | キー | 動作 |
@@ -172,3 +182,5 @@ herdr plugin config-dir nanka.tetris
 - `--focus` で開くので、`working` になった瞬間にフォーカスを奪う。プロンプト投入直後を想定した挙動。気になる場合は `src/on-status.js` の `--focus` を `--no-focus` に変える。
 - ポップアップは 40x24 を要求する。ターミナルがこれより小さいと表示が崩れる。
 - 短時間で終わる作業でも一瞬ポップアップが出る。「n 秒以上 `working` が続いたら開く」という遅延は未実装。
+- `blocked`（承認待ちなど）でも閉じる。エージェントが `working` と `blocked` を往復すると、
+  そのたびにポップアップが開いたり閉じたりする。承認プロンプトの多いセッションでは特に目立つ。

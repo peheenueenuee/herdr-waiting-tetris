@@ -7,7 +7,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { spawn } = require("node:child_process");
+const { spawnSync } = require("node:child_process");
 
 const PLUGIN_ID = process.env.HERDR_PLUGIN_ID || "nanka.tetris";
 const STATE_DIR =
@@ -97,6 +97,8 @@ function main() {
   fs.writeFileSync(LOCK_FILE, JSON.stringify({ pid: null, ts: Date.now() }));
 
   const herdr = process.env.HERDR_BIN_PATH || "herdr";
+  // popup / overlay のペインは常にアクティブペインを対象に開く。
+  // ここで --workspace や --target-pane を渡すと invalid_params で弾かれる。
   const args = [
     "plugin", "pane", "open",
     "--plugin", PLUGIN_ID,
@@ -106,13 +108,25 @@ function main() {
     "--focus",
   ];
 
-  const workspaceId = find(event, "workspace_id") || process.env.HERDR_WORKSPACE_ID;
-  if (workspaceId) args.push("--workspace", workspaceId);
-
   log(`working on ${paneId} → opening tetris`);
-  const child = spawn(herdr, args, { stdio: "ignore", detached: true });
-  child.on("error", (err) => log(`failed to open pane: ${err.message}`));
-  child.unref();
+
+  // pane open はデーモンへの RPC ですぐ返る。同期実行して失敗を取りこぼさない。
+  // detached + stdio:"ignore" で投げっぱなしにすると、エラーが出ても
+  // plugin log には「成功」としか残らず原因が追えなくなる。
+  const res = spawnSync(herdr, args, { encoding: "utf8", timeout: 10000 });
+
+  if (res.error || res.status !== 0) {
+    const detail = res.error
+      ? res.error.message
+      : `exit ${res.status}: ${(res.stderr || res.stdout || "").trim()}`;
+    log(`failed to open pane: ${detail}`);
+    // 開けなかったのにロックが残ると、次の working も抑止されてしまう。
+    try {
+      fs.unlinkSync(LOCK_FILE);
+    } catch {
+      /* 消せなくても猶予時間で失効する */
+    }
+  }
 }
 
 main();

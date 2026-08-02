@@ -6,7 +6,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { spawn } = require("node:child_process");
+const { spawnSync } = require("node:child_process");
 
 const PLUGIN_ID = process.env.HERDR_PLUGIN_ID || "nanka.tetris";
 const STATE_DIR =
@@ -39,6 +39,8 @@ fs.mkdirSync(STATE_DIR, { recursive: true });
 fs.writeFileSync(LOCK_FILE, JSON.stringify({ pid: null, ts: Date.now() }));
 
 const herdr = process.env.HERDR_BIN_PATH || "herdr";
+// popup / overlay のペインは常にアクティブペインを対象に開く。
+// --workspace を渡すと invalid_params で弾かれる。
 const args = [
   "plugin", "pane", "open",
   "--plugin", PLUGIN_ID,
@@ -50,13 +52,18 @@ const args = [
 if (process.env.HERDR_PANE_ID) {
   args.push("--env", `TETRIS_WATCH_PANE=${process.env.HERDR_PANE_ID}`);
 }
-if (process.env.HERDR_WORKSPACE_ID) {
-  args.push("--workspace", process.env.HERDR_WORKSPACE_ID);
-}
 
-const child = spawn(herdr, args, { stdio: "inherit", detached: true });
-child.on("error", (err) => {
-  process.stderr.write(`[tetris] failed to open pane: ${err.message}\n`);
+const res = spawnSync(herdr, args, { encoding: "utf8", timeout: 10000 });
+
+if (res.error || res.status !== 0) {
+  const detail = res.error
+    ? res.error.message
+    : `exit ${res.status}: ${(res.stderr || res.stdout || "").trim()}`;
+  process.stderr.write(`[tetris] failed to open pane: ${detail}\n`);
+  try {
+    fs.unlinkSync(LOCK_FILE);
+  } catch {
+    /* 消せなくても猶予時間で失効する */
+  }
   process.exit(1);
-});
-child.unref();
+}
