@@ -5,11 +5,15 @@ min_herdr_version = "0.7.0"
 description = "Play Tetris in a popup while an agent pane is working"
 platforms = ["linux", "macos"]
 
+# 各コマンドは bin/with-node.sh 経由で叩く。
+# herdr server は launchd (brew services) 起動で PATH が
+# /usr/bin:/bin:/usr/sbin:/sbin しかなく、素の "node" では spawn に失敗するため。
+
 # エージェントの状態が変わるたびに呼ばれる。
 # working になった瞬間だけポップアップを開く（閉じるのはゲーム側の仕事）。
 [[events]]
 on = "pane.agent_status_changed"
-command = ["node", "src/on-status.js"]
+command = ["sh", "bin/with-node.sh", "src/on-status.js"]
 
 # ゲーム本体。placement = "popup" は CLI からは指定できないのでここで宣言する。
 [[panes]]
@@ -18,11 +22,11 @@ title = "Tetris"
 placement = "popup"
 width = 40
 height = 24
-command = ["node", "src/tetris.js"]
+command = ["sh", "bin/with-node.sh", "src/tetris.js"]
 
 # 手動で開きたいとき用（キーバインドから呼べる）
 [[actions]]
 id = "open"
 title = "Open Tetris"
 contexts = ["workspace", "pane"]
-command = ["node", "src/open.js"]
+command = ["sh", "bin/with-node.sh", "src/open.js"]
