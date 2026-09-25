@@ -1,8 +1,8 @@
-id = "nanka.tetris"
-name = "Agent Wait Tetris"
-version = "0.1.0"
+id = "nanka.waitgames"
+name = "Agent Wait Games"
+version = "0.2.0"
 min_herdr_version = "0.7.0"
-description = "Play Tetris in a popup while an agent pane is working"
+description = "Play a small game in a popup while an agent pane is working"
 platforms = ["linux", "macos"]
 
 # 各コマンドは bin/with-node.sh 経由で叩く。
@@ -11,22 +11,55 @@ platforms = ["linux", "macos"]
 
 # エージェントの状態が変わるたびに呼ばれる。
 # working になった瞬間だけポップアップを開く（閉じるのはゲーム側の仕事）。
+# どのゲームを開くかは config.json の "game"。
 [[events]]
 on = "pane.agent_status_changed"
 command = ["sh", "bin/with-node.sh", "src/on-status.js"]
 
 # ゲーム本体。placement = "popup" は CLI からは指定できないのでここで宣言する。
+# 入口は 1 つで、遊ぶゲームは --env WAITGAME_NAME で渡す。
 [[panes]]
-id = "tetris"
-title = "Tetris"
+id = "game"
+title = "Wait Game"
 placement = "popup"
 width = 40
 height = 24
-command = ["sh", "bin/with-node.sh", "src/tetris.js"]
+command = ["sh", "bin/with-node.sh", "src/play.js"]
 
-# 手動で開きたいとき用（キーバインドから呼べる）
+# 手動で開きたいとき用（キーバインドから呼べる）。
+# 引数なしは config.json の "game"、以降はゲーム名指し。
 [[actions]]
 id = "open"
-title = "Open Tetris"
+title = "Open Wait Game"
 contexts = ["workspace", "pane"]
 command = ["sh", "bin/with-node.sh", "src/open.js"]
+
+[[actions]]
+id = "open-tetris"
+title = "Play Tetris"
+contexts = ["workspace", "pane"]
+command = ["sh", "bin/with-node.sh", "src/open.js", "tetris"]
+
+[[actions]]
+id = "open-snake"
+title = "Play Snake"
+contexts = ["workspace", "pane"]
+command = ["sh", "bin/with-node.sh", "src/open.js", "snake"]
+
+[[actions]]
+id = "open-2048"
+title = "Play 2048"
+contexts = ["workspace", "pane"]
+command = ["sh", "bin/with-node.sh", "src/open.js", "2048"]
+
+[[actions]]
+id = "open-minesweeper"
+title = "Play Minesweeper"
+contexts = ["workspace", "pane"]
+command = ["sh", "bin/with-node.sh", "src/open.js", "minesweeper"]
+
+[[actions]]
+id = "open-breakout"
+title = "Play Breakout"
+contexts = ["workspace", "pane"]
+command = ["sh", "bin/with-node.sh", "src/open.js", "breakout"]

@@ -13,15 +13,15 @@ set -e
 
 script="$1"
 if [ -z "$script" ]; then
-  echo "[tetris] with-node.sh: no script given" >&2
+  echo "[waitgames] with-node.sh: no script given" >&2
   exit 2
 fi
 shift
 
 find_node() {
   # 1. 明示指定（デバッグ用の逃げ道）
-  if [ -n "$TETRIS_NODE" ] && [ -x "$TETRIS_NODE" ]; then
-    echo "$TETRIS_NODE"
+  if [ -n "$WAITGAMES_NODE" ] && [ -x "$WAITGAMES_NODE" ]; then
+    echo "$WAITGAMES_NODE"
     return
   fi
 
@@ -58,7 +58,7 @@ find_node() {
 node_bin=$(find_node)
 
 if [ -z "$node_bin" ]; then
-  echo "[tetris] node が見つからない (PATH=$PATH)。TETRIS_NODE で明示指定できる" >&2
+  echo "[waitgames] node が見つからない (PATH=$PATH)。WAITGAMES_NODE で明示指定できる" >&2
   exit 127
 fi
 
