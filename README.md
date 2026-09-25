@@ -15,7 +15,7 @@ agent → working
 自動クローズ（スコア保存）
 ```
 
-遊べるのは 5 つ。どれを開くかは `config.json` で決める（既定は Tetris）。
+遊べるのは 5 つ。どれを開くかは `config.json` で決める（既定は Tetris、ランダムも可）。
 
 | id | ゲーム | 種類 | ひとこと |
 | --- | --- | --- | --- |
@@ -75,14 +75,16 @@ herdr plugin list
 
 herdr plugin action list --plugin nanka.waitgames
 # open              Open Wait Game
+# open-random       Play Random Game
 # open-tetris       Play Tetris
 # open-snake        Play Snake
 # open-2048         Play 2048
 # open-minesweeper  Play Minesweeper
 # open-breakout     Play Breakout
 
-herdr plugin action invoke nanka.waitgames.open        # config.json のゲーム
-herdr plugin action invoke nanka.waitgames.open-snake  # ゲームを名指し
+herdr plugin action invoke nanka.waitgames.open         # config.json のゲーム
+herdr plugin action invoke nanka.waitgames.open-snake   # ゲームを名指し
+herdr plugin action invoke nanka.waitgames.open-random  # ランダム
 ```
 
 うまく出ないときはフックとコマンドのログを見る。このプラグインは `[waitgames] ...` を stderr に出す。
@@ -103,10 +105,10 @@ command = "nanka.waitgames.open"
 description = "wait game"
 
 [[keys.command]]
-key = "prefix+n"
+key = "prefix+r"
 type = "plugin_action"
-command = "nanka.waitgames.open-snake"
-description = "snake"
+command = "nanka.waitgames.open-random"
+description = "random game"
 ```
 
 ### 止める・外す
@@ -146,10 +148,21 @@ herdr plugin config-dir nanka.waitgames
 | キー | 既定 | 意味 |
 | --- | --- | --- |
 | `auto_open` | `true` | `working` で自動的にポップアップを開くか。`false` にすると手動起動のみ |
-| `game` | `"tetris"` | 開くゲームの id（上の表を参照） |
+| `game` | `"tetris"` | 開くゲーム。名指し / `"random"` / 配列 の 3 通り |
 
-知らない名前を書いた場合は `tetris` に落ちて開く（開かない、ではない）。そのとき
-`herdr plugin log list` に `unknown game "..."` が残る。
+`game` の書き方は 3 通り。
+
+```json
+{ "game": "snake" }                    // いつも Snake
+{ "game": "random" }                   // 毎回 5 つからランダム
+{ "game": ["tetris", "2048"] }         // この 2 つからランダム
+```
+
+ランダムのときは**直前に開いたゲームを避ける**（5 つしかないので、避けないと同じものが
+続いて「ランダムに見えない」ため）。直前に何を開いたかは状態ディレクトリの `recent.json` に持つ。
+
+知らない名前を書いた場合は `tetris` に落ちて開く（開かない、ではない）。配列の中に知らない名前が
+混じっている場合はそれだけ無視する。いずれも `herdr plugin log list` に `unknown game ...` が残る。
 
 `game` を変えても、すでに開いているポップアップには影響しない。次に `working` になったときから。
 
@@ -275,6 +288,7 @@ module.exports = {
 | --- | --- |
 | `HERDR_PLUGIN_STATE_DIR/highscores.json` | ゲームごとのハイスコア（`{"tetris":1200,"snake":80}`） |
 | `HERDR_PLUGIN_STATE_DIR/game.lock` | 二重起動防止（pid 入り。プロセス終了時に削除） |
+| `HERDR_PLUGIN_STATE_DIR/recent.json` | 直前に開いたゲーム（ランダム時の連続回避に使う） |
 | `HERDR_PLUGIN_CONFIG_DIR/config.json` | ユーザー設定 |
 
 `nanka.tetris`（単一ゲーム時代）の `highscore.json` があれば、初回に `tetris` の記録として

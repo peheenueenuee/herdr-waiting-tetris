@@ -12,6 +12,7 @@
 const runtime = require("./runtime.js");
 const games = require("./games/index.js");
 const config = require("./config.js");
+const recent = require("./recent.js");
 
 function resolve() {
   const candidates = [
@@ -19,15 +20,18 @@ function resolve() {
     process.env.WAITGAME_NAME,
     config.read().game,
   ];
+  // フック経由なら WAITGAME_NAME に具体名が入っているのでここは素通りする。
+  // "random" を解決するのは herdr の外から直接起動したとき。
+  const exclude = recent.readLast();
   for (const name of candidates) {
     if (!name) continue;
-    const game = games.get(name);
-    if (game) return game;
-    process.stderr.write(
-      `[waitgames] unknown game "${name}" (${games.ids().join(", ")})\n`,
-    );
+    const picked = games.resolve(name, { exclude });
+    if (picked.warning) process.stderr.write(`[waitgames] ${picked.warning}\n`);
+    if (picked.game) return picked.game;
   }
   return games.get(games.DEFAULT_ID);
 }
 
-runtime.run(resolve());
+const game = resolve();
+recent.writeLast(game.id);
+runtime.run(game);

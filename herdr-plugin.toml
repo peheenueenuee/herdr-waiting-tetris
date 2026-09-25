@@ -35,6 +35,12 @@ contexts = ["workspace", "pane"]
 command = ["sh", "bin/with-node.sh", "src/open.js"]
 
 [[actions]]
+id = "open-random"
+title = "Play Random Game"
+contexts = ["workspace", "pane"]
+command = ["sh", "bin/with-node.sh", "src/open.js", "random"]
+
+[[actions]]
 id = "open-tetris"
 title = "Play Tetris"
 contexts = ["workspace", "pane"]

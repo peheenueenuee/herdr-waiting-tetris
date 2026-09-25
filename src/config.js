@@ -4,7 +4,7 @@
 //
 //   {
 //     "auto_open": true,      // working になったら自動で開くか
-//     "game": "tetris"        // 開くゲーム（tetris / snake / 2048 / minesweeper / breakout）
+//     "game": "tetris"        // 開くゲーム。名指し / "random" / ["tetris","2048"] のいずれか
 //   }
 
 const fs = require("node:fs");

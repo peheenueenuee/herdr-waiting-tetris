@@ -7,6 +7,7 @@
 
 const config = require("./config.js");
 const games = require("./games/index.js");
+const recent = require("./recent.js");
 const { openPane } = require("./launch.js");
 
 function log(msg) {
@@ -42,10 +43,12 @@ function main() {
   const cfg = config.read();
   if (cfg.auto_open === false) return;
 
-  const game = games.get(cfg.game) || games.get(games.DEFAULT_ID);
-  if (!games.get(cfg.game)) {
-    log(`unknown game "${cfg.game}" in config; falling back to ${game.id}`);
-  }
+  // "snake" / "random" / ["tetris","2048"] のどれでも受ける。
+  // ランダムのときは直前に開いたものを避ける。
+  const picked = games.resolve(cfg.game, { exclude: recent.readLast() });
+  if (picked.warning) log(picked.warning);
+  const game = picked.game || games.get(games.DEFAULT_ID);
+  if (!picked.game) log(`falling back to ${game.id}`);
 
   const paneId = find(event, "pane_id") || process.env.HERDR_PANE_ID;
   if (!paneId) {
@@ -54,6 +57,7 @@ function main() {
   }
 
   if (openPane({ paneId, gameId: game.id, log })) {
+    recent.writeLast(game.id);
     log(`working on ${paneId} → opening ${game.id}`);
   }
 }
