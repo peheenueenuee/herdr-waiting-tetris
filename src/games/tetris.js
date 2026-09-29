@@ -236,7 +236,10 @@ function create(api) {
       }
 
       const side = panel();
-      const out = [ui.top(W * 2)];
+      // 上辺の枠は描かない。ポップアップの実寸が 22 行しかなく、枠 2 本 + 盤 20 行では
+      // 1 行はみ出してステータス行が画面を押し出してしまうため。
+      // ピースは上から入ってくるので、側壁と床だけで閉じるほうが形としても素直。
+      const out = [];
       for (let y = 0; y < H; y++) {
         let row = "│";
         for (let x = 0; x < W; x++) {

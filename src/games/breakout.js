@@ -1,16 +1,19 @@
 "use strict";
 
 // ブロック崩し。唯一のリアルタイム操作系で、左右だけで遊べる。
-// 盤 36x16（セル 1 文字）で枠込み 38 桁。
+// 盤 33x16（セル 1 文字）で枠込み 35 桁。
+//
+// 幅はポップアップの実寸 37 桁が上限。ここを 36（枠込み 38）にしていたら全行が
+// 折り返して画面が流れた。W は BRICK_W で割り切れる値にすること。
 
 const ui = require("./ui.js");
 
-const W = 36;
+const W = 33;
 const H = 16;
 const TICK_MS = 55;
 
 const BRICK_W = 3;
-const COLS = W / BRICK_W; // 12
+const COLS = W / BRICK_W; // 11
 const ROWS = 5;
 const BRICK_TOP = 1; // 最上段は 1 行空けておく（跳ね返りの余地）
 
@@ -180,7 +183,8 @@ function create(api) {
         ui.LABEL + "LV " + ui.RESET + String(level),
       );
       out.push(
-        " " + ui.keyHint([["← →", "move"], ["spc", "launch"], ["p", "pause"], ["q", "quit"]]),
+        // 操作ヒントは盤より長くなりがち。ここが 37 桁を超えると盤が正しくても折り返す
+        " " + ui.keyHint([["← →", "move"], ["spc", "fire"], ["p", "pause"], ["q", "quit"]]),
       );
       return out;
     },

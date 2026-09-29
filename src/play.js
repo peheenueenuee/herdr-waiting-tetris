@@ -32,6 +32,31 @@ function resolve() {
   return games.get(games.DEFAULT_ID);
 }
 
+// 調査用の口: WAITGAME_PROBE=1 で起動すると、ゲームを始めずに
+// ポップアップの実サイズ（PTY の桁数・行数）を state ディレクトリに書いて即終了する。
+// マニフェストの width/height はポップアップの外枠で、中で使える大きさとは別物なので、
+// 盤の大きさを決めるときはここで実測した値を根拠にする。
+//
+//   herdr plugin pane open --plugin nanka.waitgames --entrypoint game --env WAITGAME_PROBE=1
+//   cat "$(herdr plugin state-dir nanka.waitgames)/display.json"
+if (process.env.WAITGAME_PROBE) {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const { STATE_DIR } = require("./paths.js");
+  fs.mkdirSync(STATE_DIR, { recursive: true });
+  fs.writeFileSync(
+    path.join(STATE_DIR, "display.json"),
+    JSON.stringify({
+      columns: process.stdout.columns,
+      rows: process.stdout.rows,
+      isTTY: Boolean(process.stdout.isTTY),
+      term: process.env.TERM || null,
+      ts: Date.now(),
+    }),
+  );
+  process.exit(0);
+}
+
 const game = resolve();
 recent.writeLast(game.id);
 runtime.run(game);

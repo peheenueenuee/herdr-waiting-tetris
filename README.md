@@ -279,8 +279,25 @@ module.exports = {
 };
 ```
 
-制約は「ポップアップの 40x24 に収まること」だけ。`q` と `Ctrl-C` は runtime が拾うので
+制約は「ポップアップの中に収まること」だけ。`q` と `Ctrl-C` は runtime が拾うので
 ゲーム側で扱わなくてよい。矢印キーは `\x1b[A` 〜 `\x1b[D` に正規化されて届く。
+
+**使えるのは 37 桁 x 22 行。** マニフェストの `width = 40` / `height = 24` は
+ポップアップの外枠で、中の PTY はそれより小さい（枠と余白に 3 桁 2 行とられる）。
+行数は「`lines()` の行数 + ステータス行 1」で数える。ここを 1 でも超えると全行が折り返して
+画面が流れるので、`dev.local/smoke.js` が機械的に測って落としている。
+
+疑わしくなったら測り直せる。
+
+```bash
+herdr plugin pane open --plugin nanka.waitgames --entrypoint game --env WAITGAME_PROBE=1
+cat ~/.local/state/herdr/plugins/nanka.waitgames/display.json
+# {"columns":37,"rows":22,...}
+```
+
+`WAITGAME_PROBE=1` で起動したときはゲームを始めず、実寸を書いてすぐ終了する。
+幅を測るときは `ui.visibleWidth()` を使うこと。`String.length` だと日本語を 1 桁と数えるので、
+ステータス行の日本語を見落とす。
 
 ## 保存先
 
@@ -289,6 +306,7 @@ module.exports = {
 | `HERDR_PLUGIN_STATE_DIR/highscores.json` | ゲームごとのハイスコア（`{"tetris":1200,"snake":80}`） |
 | `HERDR_PLUGIN_STATE_DIR/game.lock` | 二重起動防止（pid 入り。プロセス終了時に削除） |
 | `HERDR_PLUGIN_STATE_DIR/recent.json` | 直前に開いたゲーム（ランダム時の連続回避に使う） |
+| `HERDR_PLUGIN_STATE_DIR/display.json` | `WAITGAME_PROBE=1` で測ったポップアップの実寸（調査用） |
 | `HERDR_PLUGIN_CONFIG_DIR/config.json` | ユーザー設定 |
 
 `nanka.tetris`（単一ゲーム時代）の `highscore.json` があれば、初回に `tetris` の記録として
@@ -297,7 +315,9 @@ module.exports = {
 ## 既知の注意点
 
 - `--focus` で開くので、`working` になった瞬間にフォーカスを奪う。プロンプト投入直後を想定した挙動。気になる場合は `src/launch.js` の `--focus` を `--no-focus` に変える。
-- ポップアップは 40x24 を要求する。ターミナルがこれより小さいと表示が崩れる。
+- ポップアップは 40x24（外枠）を要求し、中で使えるのは 37x22。ターミナルがこれより小さいと
+  ポップアップも小さくなるが、その場合はゲームを描かずに「画面が小さい」と必要サイズを出す。
+  崩れた絵が出続けるよりは分かるはず。大きくすれば描き直す。
 - 短時間で終わる作業でも一瞬ポップアップが出る。「n 秒以上 `working` が続いたら開く」という遅延は未実装。
 - `blocked`（承認待ちなど）でも閉じる。エージェントが `working` と `blocked` を往復すると、
   そのたびにポップアップが開いたり閉じたりする。承認プロンプトの多いセッションでは特に目立つ。

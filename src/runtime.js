@@ -16,6 +16,7 @@ const {
   LOCK_FILE,
   LEGACY_SCORE_FILES,
 } = require("./paths.js");
+const ui = require("./games/ui.js");
 
 // ---------------------------------------------------------------- highscore
 
@@ -106,12 +107,39 @@ function run(game) {
 
   function render() {
     if (!inst) return;
-    const out = ["\x1b[H"];
-    for (const line of inst.lines()) out.push(line + "\x1b[K\n");
+    const lines = inst.lines();
     let status = inst.status ? inst.status() || "" : "";
     if (agentDone) status = "\x1b[42;30m agent done — closing… \x1b[0m";
+
+    // 入らないまま描くと全行が折り返して画面が流れ、何が起きているか分からなくなる。
+    // ポップアップの実寸はマニフェストの width/height より小さい（実測 40x24 → 37x22）。
+    const needW = Math.max(...lines.map(ui.visibleWidth), ui.visibleWidth(status));
+    const needH = lines.length + 1; // 最下段のステータス行
+    const cols = process.stdout.columns;
+    const rows = process.stdout.rows;
+    if (cols && rows && (cols < needW || rows < needH)) {
+      tooSmall(needW, needH, cols, rows);
+      return;
+    }
+
+    const out = ["\x1b[H"];
+    for (const line of lines) out.push(line + "\x1b[K\n");
     out.push(status + "\x1b[K\x1b[J");
     process.stdout.write(out.join(""));
+  }
+
+  function tooSmall(needW, needH, cols, rows) {
+    process.stdout.write(
+      "\x1b[H\x1b[2J" +
+        [
+          ui.ACCENT + "画面が小さい" + ui.RESET,
+          "",
+          ui.LABEL + "必要 " + ui.RESET + `${needW}x${needH}`,
+          ui.LABEL + "現在 " + ui.RESET + `${cols}x${rows}`,
+          "",
+          ui.DIM + "q: 閉じる" + ui.RESET,
+        ].join("\r\n"),
+    );
   }
 
   function recordBest() {
@@ -197,6 +225,12 @@ function run(game) {
       if (key === "\x03" || key === "q") return quit(0);
       inst.onKey(key);
     }
+  });
+
+  // ポップアップの大きさが変わったら描き直す（小さすぎる表示からの復帰も兼ねる）
+  process.stdout.on("resize", () => {
+    process.stdout.write("\x1b[2J");
+    render();
   });
 
   watchAgent(finish);
