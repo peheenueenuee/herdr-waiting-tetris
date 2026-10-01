@@ -9,6 +9,7 @@ const W = 16;
 const H = 12;
 const MINES = 30;
 
+const FLAG = ui.bg(220) + ui.fg(16); // 黄色地に黒の F
 const NUM_COLOR = {
   1: ui.fg(39), 2: ui.fg(41), 3: ui.fg(203), 4: ui.fg(63),
   5: ui.fg(131), 6: ui.fg(37), 7: ui.fg(252), 8: ui.fg(244),
@@ -143,7 +144,9 @@ function create(api) {
   }
 
   function cellText(x, y) {
-    if (flag[y][x]) return ui.fg(203) + " !" + ui.RESET;
+    // 旗はセルごと黄色く塗る。文字色だけ変えると、地の色が開いたマスと同じなので
+    // 「開いているマスに印が付いている」ように見えてしまう。
+    if (flag[y][x]) return FLAG + " F" + ui.RESET;
     if (!open[y][x]) {
       // 負けたときだけ伏せてある地雷を見せる
       if (over && mine[y][x]) return ui.fg(196) + " *" + ui.RESET;
@@ -185,7 +188,7 @@ function create(api) {
         ui.LABEL + "TIME " + ui.RESET + timeText,
       );
       out.push(
-        " " + ui.keyHint([["←↑↓→", "move"], ["spc", "open"], ["f", "flag"], ["r", "new"]]),
+        " " + ui.keyHint([["hjkl", "move"], ["spc", "open"], ["f", "flag"], ["r", "new"]]),
       );
       return out;
     },
@@ -205,10 +208,10 @@ function create(api) {
       if (over || won) return;
 
       switch (key) {
-        case "\x1b[D": case "a": cx = Math.max(0, cx - 1); break;
-        case "\x1b[C": case "d": cx = Math.min(W - 1, cx + 1); break;
-        case "\x1b[A": case "w": cy = Math.max(0, cy - 1); break;
-        case "\x1b[B": case "s": cy = Math.min(H - 1, cy + 1); break;
+        case "\x1b[D": case "h": case "a": cx = Math.max(0, cx - 1); break;
+        case "\x1b[C": case "l": case "d": cx = Math.min(W - 1, cx + 1); break;
+        case "\x1b[A": case "k": case "w": cy = Math.max(0, cy - 1); break;
+        case "\x1b[B": case "j": case "s": cy = Math.min(H - 1, cy + 1); break;
         case "f":
           if (!open[cy][cx]) flag[cy][cx] = !flag[cy][cx];
           break;

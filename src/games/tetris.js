@@ -198,7 +198,7 @@ function create(api) {
       "  " + n1,
       "  " + n2,
       "",
-      "  " + ui.DIM + "← →" + ui.RESET + " move",
+      "  " + ui.DIM + "h l" + ui.RESET + " move",
       "  " + ui.DIM + "↑ x" + ui.RESET + " rotate",
       "  " + ui.DIM + "z" + ui.RESET + "   rot ccw",
       "  " + ui.DIM + "↓" + ui.RESET + "   soft",
@@ -273,8 +273,9 @@ function create(api) {
       if (paused) return;
 
       switch (key) {
-        case "\x1b[D": case "a": move(-1, 0); break;
-        case "\x1b[C": case "d": move(1, 0); break;
+        // j/k は回転に使っているので、ここで足せるのは h/l だけ
+        case "\x1b[D": case "h": case "a": move(-1, 0); break;
+        case "\x1b[C": case "l": case "d": move(1, 0); break;
         case "\x1b[B": case "s":
           if (move(0, 1)) score += 1;
           else lockPiece();

@@ -126,7 +126,7 @@ function create(api) {
         ui.LABEL + "LEN " + ui.RESET + ui.pad(String(snake.length), 6),
       );
       out.push(
-        " " + ui.keyHint([["←↑↓→", "move"], ["p", "pause"], ["q", "quit"]]),
+        " " + ui.keyHint([["hjkl", "move"], ["p", "pause"], ["q", "quit"]]),
       );
       return out;
     },
@@ -151,10 +151,10 @@ function create(api) {
       if (paused) return;
 
       switch (key) {
-        case "\x1b[D": case "a": turn(-1, 0); break;
-        case "\x1b[C": case "d": turn(1, 0); break;
-        case "\x1b[A": case "w": turn(0, -1); break;
-        case "\x1b[B": case "s": turn(0, 1); break;
+        case "\x1b[D": case "h": case "a": turn(-1, 0); break;
+        case "\x1b[C": case "l": case "d": turn(1, 0); break;
+        case "\x1b[A": case "k": case "w": turn(0, -1); break;
+        case "\x1b[B": case "j": case "s": turn(0, 1); break;
       }
     },
 

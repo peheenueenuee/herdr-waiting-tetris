@@ -184,7 +184,7 @@ function create(api) {
       );
       out.push(
         // 操作ヒントは盤より長くなりがち。ここが 37 桁を超えると盤が正しくても折り返す
-        " " + ui.keyHint([["← →", "move"], ["spc", "fire"], ["p", "pause"], ["q", "quit"]]),
+        " " + ui.keyHint([["hl", "move"], ["spc", "fire"], ["p", "pause"], ["q", "quit"]]),
       );
       return out;
     },
@@ -213,10 +213,10 @@ function create(api) {
       if (paused) return;
 
       switch (key) {
-        case "\x1b[D": case "a":
+        case "\x1b[D": case "h": case "a":
           paddleX = Math.max(0, paddleX - 2);
           break;
-        case "\x1b[C": case "d":
+        case "\x1b[C": case "l": case "d":
           paddleX = Math.min(W - PADDLE_W, paddleX + 2);
           break;
         case " ":

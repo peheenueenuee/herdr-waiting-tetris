@@ -148,7 +148,7 @@ function create(api) {
       }
 
       out.push(ui.LABEL + " SCORE " + ui.RESET + String(score));
-      out.push(" " + ui.keyHint([["←↑↓→", "slide"], ["r", "retry"], ["q", "quit"]]));
+      out.push(" " + ui.keyHint([["hjkl", "slide"], ["r", "retry"], ["q", "quit"]]));
       return out;
     },
 
@@ -168,10 +168,10 @@ function create(api) {
 
       let moved = false;
       switch (key) {
-        case "\x1b[D": case "a": moved = slide("left"); break;
-        case "\x1b[C": case "d": moved = slide("right"); break;
-        case "\x1b[A": case "w": moved = slide("up"); break;
-        case "\x1b[B": case "s": moved = slide("down"); break;
+        case "\x1b[D": case "h": case "a": moved = slide("left"); break;
+        case "\x1b[C": case "l": case "d": moved = slide("right"); break;
+        case "\x1b[A": case "k": case "w": moved = slide("up"); break;
+        case "\x1b[B": case "j": case "s": moved = slide("down"); break;
       }
       if (moved) api.render();
     },
