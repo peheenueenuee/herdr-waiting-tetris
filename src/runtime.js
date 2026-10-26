@@ -94,12 +94,12 @@ function tokenize(chunk) {
  *   lines()              … 画面の各行（ANSI 込み、必須）
  *   status()             … 最下段の 1 行（任意）
  *   onKey(key)           … キー入力（必須）
- *   bestCandidate()      … 今の記録候補。終了時に runtime が保存する（任意）
+ *   bestCandidate()      … 今の記録候補。キー入力の直前と終了時に runtime が保存する（任意）
  *   stop()               … タイマーなどの後片付け（任意）
  */
 function run(game) {
   const scores = loadScores();
-  const storedBest = typeof scores[game.id] === "number" ? scores[game.id] : null;
+  const storedBest = () => (typeof scores[game.id] === "number" ? scores[game.id] : null);
 
   let agentDone = false;
   let cleanedUp = false;
@@ -146,7 +146,7 @@ function run(game) {
     if (!inst || !inst.bestCandidate) return;
     const value = inst.bestCandidate();
     if (typeof value !== "number" || !Number.isFinite(value)) return;
-    const current = typeof scores[game.id] === "number" ? scores[game.id] : null;
+    const current = storedBest();
     const better =
       current === null ||
       (game.lowerIsBetter ? value < current : value > current);
@@ -217,12 +217,22 @@ function run(game) {
   process.on("SIGINT", () => quit(0));
   process.on("SIGTERM", () => quit(0));
 
-  inst = game.create({ best: storedBest, render, quit: () => quit(0) });
+  // best は getter にして、同じプロセスの中で塗り替えた記録も画面に出す
+  inst = game.create({
+    get best() {
+      return storedBest();
+    },
+    render,
+    quit: () => quit(0),
+  });
 
   process.stdin.on("data", (chunk) => {
     if (agentDone) return;
     for (const key of tokenize(chunk)) {
       if (key === "\x03" || key === "q") return quit(0);
+      // キーを渡す前に記録する。r でリトライされると前のラウンドの記録が消えるため
+      // （マインスイーパはクリア後に r で次へ進むので、終了時だけでは一度も残らなかった）
+      recordBest();
       inst.onKey(key);
     }
   });
